@@ -100,7 +100,7 @@ update_readme_status() {
         test_badge="![Tests](https://img.shields.io/badge/tests-${failed_cnt}%20failed-red)"
     fi
 
-    sed -i -E "s|(\\| \`${variant}/\` \\| \`[^|]+\` \\|) [^|]+ \\| [^|]+ \\||\\1 ${build_badge} | ${test_badge} ||" "$readme_file" 2>/dev/null || true
+    sed -i -E "s|(\\| \`${variant}/\` \\| \`[^|]+\` \\| [^|]+ \\|) [^|]+ \\||\\1 ${test_badge} ||" "$readme_file" 2>/dev/null || true
 }
 
 test_variant() {
