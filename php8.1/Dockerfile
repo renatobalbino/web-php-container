@@ -1,5 +1,10 @@
 FROM alpine:3.16
 
+COPY /config/install-php-extensions /usr/local/bin/install-php-extensions
+COPY /config/docker-php-ext-enable /usr/local/bin/docker-php-ext-enable
+RUN chmod +x /usr/local/bin/install-php-extensions /usr/local/bin/docker-php-ext-enable \
+    && ln -sf /usr/local/bin/install-php-extensions /usr/local/bin/docker-php-ext-install
+
 COPY /config/boostrap.sh \
     /uploads/s6-overlay-amd64.tar.gz \
     /config/www.conf \

@@ -5,20 +5,25 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VARIANT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ROOT_DIR="$(cd "$VARIANT_DIR/.." && pwd)"
 
-if [ ! -f "$ROOT_DIR/.env" ]; then
-    echo "❌ ERRO: Arquivo $ROOT_DIR/.env não encontrado."
-    exit 1
-fi
-
 if [ ! -f "$VARIANT_DIR/.env" ]; then
     echo "❌ ERRO: Arquivo $VARIANT_DIR/.env não encontrado."
     exit 1
 fi
 
 set -a
-. "$ROOT_DIR/.env"
+if [ -f "$ROOT_DIR/.env" ]; then
+    . "$ROOT_DIR/.env"
+fi
 . "$VARIANT_DIR/.env"
 set +a
+
+REPOSITORY="${REPOSITORY:-${DOCKERHUB_USERNAME:-}}"
+IMAGE="${IMAGE:-php}"
+
+if [ -z "$REPOSITORY" ] || [ -z "$IMAGE" ]; then
+    echo "❌ ERRO: As variáveis REPOSITORY e IMAGE devem estar definidas no arquivo $ROOT_DIR/.env ou nas variáveis de ambiente (GitHub Secrets)."
+    exit 1
+fi
 
 echo "==> Building $IMAGE:$TAG..."
 docker build --platform=linux/amd64 -t "$IMAGE:$TAG" "$VARIANT_DIR"

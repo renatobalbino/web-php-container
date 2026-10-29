@@ -85,6 +85,7 @@ cd /usr/src/php
     --enable-opcache \
     --enable-sockets \
     --enable-pcntl \
+    --enable-posix \
     --enable-bcmath \
     --enable-exif \
     --enable-ftp \
@@ -133,5 +134,14 @@ mv /tmp/nginx.conf /etc/nginx/
 mv /tmp/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 echo "<?php phpinfo(); ?>" > /var/www/html/public/index.php
+
+# Create s6-overlay cont-init.d hook to remove apk at container startup (leaving apk available for child Dockerfiles during build)
+mkdir -p /etc/cont-init.d
+cat << 'EOF' > /etc/cont-init.d/00-remove-apk.sh
+#!/usr/bin/with-contenv sh
+apk del --purge apk-tools 2>/dev/null || true
+rm -rf /sbin/apk /usr/sbin/apk /etc/apk /lib/apk /usr/share/apk /var/cache/apk
+EOF
+chmod 755 /etc/cont-init.d/00-remove-apk.sh
 
 rm -rf /tmp/*

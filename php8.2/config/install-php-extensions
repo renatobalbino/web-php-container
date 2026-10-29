@@ -1,0 +1,145 @@
+#!/bin/sh
+set -e
+
+if [ $# -eq 0 ]; then
+    echo "Usage: install-php-extensions <ext1> [ext2 ...]"
+    echo "Examples:"
+    echo "  install-php-extensions oci8"
+    echo "  install-php-extensions xdebug soap pgsql pdo_pgsql"
+    echo "  install-php-extensions redis imagick swoole"
+    exit 1
+fi
+
+PHP_BIN="$(command -v php || echo /usr/bin/php)"
+PHP_MAJOR_MINOR="$($PHP_BIN -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')"
+CONF_DIR="$($PHP_BIN -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')"
+mkdir -p "$CONF_DIR"
+
+case "$PHP_MAJOR_MINOR" in
+    7.3|7.4)
+        APK_PHP_PREFIX="php7"
+        PECL_BIN="$(command -v pecl || command -v pecl7 || echo /usr/bin/pecl)"
+        PHPIZE_BIN="$(command -v phpize || command -v phpize7 || echo /usr/bin/phpize)"
+        PHP_CONFIG_BIN="$(command -v php-config || command -v php-config7 || echo /usr/bin/php-config)"
+        OCI8_PECL_SPEC="oci8-2.2.0"
+        ;;
+    8.0)
+        APK_PHP_PREFIX="php8"
+        PECL_BIN="$(command -v pecl8 || command -v pecl || echo /usr/bin/pecl8)"
+        PHPIZE_BIN="$(command -v phpize8 || command -v phpize || echo /usr/bin/phpize8)"
+        PHP_CONFIG_BIN="$(command -v php-config8 || command -v php-config || echo /usr/bin/php-config8)"
+        OCI8_PECL_SPEC="oci8-3.0.1"
+        ;;
+    8.1)
+        APK_PHP_PREFIX="php81"
+        PECL_BIN="$(command -v pecl81 || command -v pecl || echo /usr/bin/pecl81)"
+        PHPIZE_BIN="$(command -v phpize81 || command -v phpize || echo /usr/bin/phpize81)"
+        PHP_CONFIG_BIN="$(command -v php-config81 || command -v php-config || echo /usr/bin/php-config81)"
+        OCI8_PECL_SPEC="oci8-3.2.1"
+        ;;
+    8.2)
+        APK_PHP_PREFIX="php82"
+        PECL_BIN="$(command -v pecl82 || command -v pecl || echo /usr/bin/pecl82)"
+        PHPIZE_BIN="$(command -v phpize82 || command -v phpize || echo /usr/bin/phpize82)"
+        PHP_CONFIG_BIN="$(command -v php-config82 || command -v php-config || echo /usr/bin/php-config82)"
+        OCI8_PECL_SPEC="oci8-3.2.1"
+        ;;
+    *)
+        APK_PHP_PREFIX="php"
+        PECL_BIN="$(command -v pecl || echo /usr/bin/pecl)"
+        PHPIZE_BIN="$(command -v phpize || echo /usr/bin/phpize)"
+        PHP_CONFIG_BIN="$(command -v php-config || echo /usr/bin/php-config)"
+        OCI8_PECL_SPEC="oci8"
+        ;;
+esac
+
+ln -sf "$PHPIZE_BIN" /usr/bin/phpize 2>/dev/null || true
+ln -sf "$PHP_CONFIG_BIN" /usr/bin/php-config 2>/dev/null || true
+ln -sf "$PECL_BIN" /usr/bin/pecl 2>/dev/null || true
+
+apk update
+
+ensure_build_deps() {
+    apk add --no-cache --virtual .php-ext-build-deps \
+        autoconf \
+        build-base \
+        pkgconfig \
+        linux-headers \
+        "${APK_PHP_PREFIX}-dev" \
+        "${APK_PHP_PREFIX}-pear" \
+        openssl-dev \
+        zlib-dev \
+        pcre-dev \
+        curl-dev
+}
+
+ensure_oracle_instantclient() {
+    if [ ! -d "/opt/oracle/instantclient" ]; then
+        echo "==> Installing Oracle Instant Client..."
+        apk add --no-cache libaio libnsl libc6-compat gcompat wget unzip
+        mkdir -p /opt/oracle
+        cd /tmp
+        wget -q https://download.oracle.com/otn_software/linux/instantclient/2117000/instantclient-basic-linux.x64-21.17.0.0.0dbru.zip
+        wget -q https://download.oracle.com/otn_software/linux/instantclient/2117000/instantclient-sdk-linux.x64-21.17.0.0.0dbru.zip
+        unzip -oq ./instantclient-basic-linux.x64-21.17.0.0.0dbru.zip -d /opt/oracle
+        unzip -oq ./instantclient-sdk-linux.x64-21.17.0.0.0dbru.zip -d /opt/oracle
+        rm -f instantclient-basic-linux.x64-21.17.0.0.0dbru.zip instantclient-sdk-linux.x64-21.17.0.0.0dbru.zip
+        ln -sf /opt/oracle/instantclient_21_17/sqlplus /usr/bin/sqlplus
+        ln -sf /opt/oracle/instantclient_21_17 /opt/oracle/instantclient
+        ln -sf /usr/lib/libnsl.so.2 /usr/lib/libnsl.so.1 || true
+        ln -sf /lib/libc.musl-x86_64.so.1 /usr/lib/libresolv.so.2 || true
+        ln -sf /lib/ld-musl-x86_64.so.1 /usr/lib/ld-linux-x86-64.so.2 || true
+    fi
+    export LD_LIBRARY_PATH="/opt/oracle/instantclient:${LD_LIBRARY_PATH}"
+}
+
+PECL_UPDATED=0
+ensure_pecl_updated() {
+    if [ "$PECL_UPDATED" -eq 0 ]; then
+        "$PECL_BIN" channel-update pecl.php.net || true
+        PECL_UPDATED=1
+    fi
+}
+
+for EXT in "$@"; do
+    EXT_BASE="${EXT%%-*}"
+    EXT_LOWER="$(printf "%s" "$EXT_BASE" | tr '[:upper:]' '[:lower:]')"
+
+    if "$PHP_BIN" -m | grep -qi "^${EXT_LOWER}$"; then
+        echo "==> Extension '${EXT_LOWER}' is already installed and enabled."
+        continue
+    fi
+
+    case "$EXT_LOWER" in
+        oci8)
+            ensure_build_deps
+            ensure_oracle_instantclient
+            ensure_pecl_updated
+            echo "==> Installing ${OCI8_PECL_SPEC} via PECL..."
+            printf "instantclient,/opt/oracle/instantclient\n" | "$PECL_BIN" install "$OCI8_PECL_SPEC"
+            docker-php-ext-enable oci8
+            ;;
+        *)
+            # Try official Alpine package first (e.g. php81-redis, php7-soap, php82-xdebug)
+            if apk add --no-cache "${APK_PHP_PREFIX}-${EXT_LOWER}" 2>/dev/null || apk add --no-cache "${APK_PHP_PREFIX}-pecl-${EXT_LOWER}" 2>/dev/null; then
+                echo "==> Installed ${EXT_LOWER} via Alpine package."
+            else
+                echo "==> Installing ${EXT} via PECL..."
+                ensure_build_deps
+                ensure_pecl_updated
+                printf "\n" | "$PECL_BIN" install "$EXT"
+                docker-php-ext-enable "$EXT_LOWER"
+            fi
+            ;;
+    esac
+done
+
+# Cleanup temporary files, build deps, and purge apk for container hardening
+rm -rf /tmp/pear /tmp/*
+apk del .php-ext-build-deps 2>/dev/null || true
+if [ "${KEEP_APK:-0}" != "1" ]; then
+    apk del --purge apk-tools 2>/dev/null || true
+    rm -rf /sbin/apk /usr/sbin/apk /etc/apk /lib/apk /usr/share/apk /var/cache/apk
+fi
+
+echo "✅ PHP extensions installed and enabled successfully: $*"

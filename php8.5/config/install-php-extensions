@@ -221,8 +221,12 @@ for EXT in "$@"; do
     esac
 done
 
-# Cleanup source and build dependencies
+# Cleanup source, build dependencies, and remove apk package manager for container hardening (unless KEEP_APK=1)
 rm -rf "$SRC_DIR" /tmp/pear /tmp/*
 apk del .php-ext-build-deps 2>/dev/null || true
+if [ "${KEEP_APK:-0}" != "1" ]; then
+    apk del --purge apk-tools 2>/dev/null || true
+    rm -rf /sbin/apk /usr/sbin/apk /etc/apk /lib/apk /usr/share/apk /var/cache/apk
+fi
 
 echo "✅ PHP extensions installed and enabled successfully: $*"

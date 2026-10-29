@@ -5,8 +5,10 @@ ENV PHP_VERSION=85
 
 COPY /config/install-php-extensions /usr/local/bin/install-php-extensions
 COPY /config/docker-php-ext-enable /usr/local/bin/docker-php-ext-enable
-RUN chmod +x /usr/local/bin/install-php-extensions /usr/local/bin/docker-php-ext-enable \
-    && ln -sf /usr/local/bin/install-php-extensions /usr/local/bin/docker-php-ext-install
+COPY /config/octane-install /usr/local/bin/octane-install
+RUN chmod +x /usr/local/bin/install-php-extensions /usr/local/bin/docker-php-ext-enable /usr/local/bin/octane-install \
+    && ln -sf /usr/local/bin/install-php-extensions /usr/local/bin/docker-php-ext-install \
+    && ln -sf /usr/local/bin/octane-install /usr/local/bin/install-octane
 
 COPY /config/boostrap.sh \
     /uploads/s6-overlay-amd64.tar.gz \
