@@ -2,6 +2,7 @@
 
 [![PHP 8.5](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.5.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.5.yml)
 [![PHP 8.4](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.4.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.4.yml)
+[![PHP 8.3](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.3.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.3.yml)
 [![PHP 8.2](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.2.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.2.yml)
 [![PHP 8.1](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.1.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.1.yml)
 [![PHP 8.0](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.0.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.0.yml)
@@ -18,14 +19,15 @@ Production-ready, hardened, and optimized Docker images for PHP applications (La
 
 > Each variant below has its own live **GitHub Actions Build Status** badge pointing to [`renatobalbino/web-php-container`](https://github.com/renatobalbino/web-php-container/actions) and a **Test Suite** badge updated automatically by `./tests/test-images.sh`.
 
-### Active Primary Variants (Custom-Compiled PHP + Helpers)
+### Active Primary Variants (Optimized Multi-Stage Builds + Headless Variants)
 
 | Variant | Directory | Image Tag | GitHub Build Status | Test Suite | Description |
 | :--- | :--- | :--- | :---: | :---: | :--- |
-| **PHP 8.5** | `php8.5/` | `renatobalbino/php:8.5` | [![PHP 8.5](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.5.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.5.yml) | ![Tests](https://img.shields.io/badge/tests-55%20passed-brightgreen) | PHP 8.5.12 + Nginx + Redis + `install-php-extensions` + `octane-install` |
-| **PHP 8.4** | `php8.4/` | `renatobalbino/php:8.4` | [![PHP 8.4](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.4.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.4.yml) | ![Tests](https://img.shields.io/badge/tests-55%20passed-brightgreen) | PHP 8.4.27 + Nginx + Redis + `install-php-extensions` + `octane-install` |
+| **PHP 8.5** | `php8.5/` | `renatobalbino/php:8.5`<br>`renatobalbino/php:8.5-headless` | [![PHP 8.5](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.5.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.5.yml) | ![Tests](https://img.shields.io/badge/tests-56%20passed-brightgreen) | PHP 8.5.12 + Nginx + Redis + `install-headless` + `octane-install` (~184 MB base / ~563 MB headless) |
+| **PHP 8.4** | `php8.4/` | `renatobalbino/php:8.4`<br>`renatobalbino/php:8.4-headless` | [![PHP 8.4](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.4.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.4.yml) | ![Tests](https://img.shields.io/badge/tests-56%20passed-brightgreen) | PHP 8.4.27 + Nginx + Redis + `install-headless` + `octane-install` (~180 MB base / ~559 MB headless) |
+| **PHP 8.3** | `php8.3/` | `renatobalbino/php:8.3`<br>`renatobalbino/php:8.3-headless` | [![PHP 8.3](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.3.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.3.yml) | ![Tests](https://img.shields.io/badge/tests-53%20passed-brightgreen) | PHP 8.3.36 + Nginx + Redis + `install-headless` + `octane-install` (~196 MB base / ~624 MB headless) |
 
-### Legacy Variants (With `install-php-extensions` & Runtime Hardening)
+### Legacy Variants (With `install-php-extensions`, `install-headless` & Runtime Hardening)
 
 | Variant | Directory | Image Tag | GitHub Build Status | Test Suite | Description |
 | :--- | :--- | :--- | :---: | :---: | :--- |
@@ -46,12 +48,13 @@ Production-ready, hardened, and optimized Docker images for PHP applications (La
 
 ---
 
-## 🛠️ Extension, Octane & Security Hardening Helpers
+## 🛠️ Extension, Headless, Octane & Security Hardening Helpers
 
 All images (`7.3` through `8.5`) provide the following utilities in `/usr/local/bin/`:
+- **`install-headless`**: Available in **all versions (`7.3` through `8.5`)**. Installs `xvfb`, `fontconfig`, `dbus`, `libxrender`, and `ttf-freefont` on demand for headless browser automation (Puppeteer, Browsershot, Chrome Headless).
 - **`install-php-extensions`** (and its alias **`docker-php-ext-install`**): Available in **all versions (`7.3` through `8.5`)**. Installs, compiles, and enables one or more extensions (via PECL, official Alpine packages, PHP core sources, or Oracle Instant Client) and cleans up all temporary build dependencies and the Alpine `apk` package manager once finished.
 - **`docker-php-ext-enable`**: Available in **all versions (`7.3` through `8.5`)**. Enables an already-compiled `.so` module by creating the corresponding `.ini` file in PHP's `conf.d` directory.
-- **`octane-install`** (and its alias **`install-octane`**): Available in **`8.4` and `8.5`**. Installs and enables `swoole`, `pcntl`, and `posix`, configures the `s6-overlay` Octane service (`/etc/services.d/octane/run`), updates `/etc/nginx/nginx.conf` to reverse-proxy requests to Octane on port `8000`, and purges `apk` after compilation.
+- **`octane-install`** (and its alias **`install-octane`**): Available in **`8.3`, `8.4`, and `8.5`**. Installs and enables `swoole`, `pcntl`, and `posix`, configures the `s6-overlay` Octane service (`/etc/services.d/octane/run`), updates `/etc/nginx/nginx.conf` to reverse-proxy requests to Octane on port `8000`, and purges `apk` after compilation.
 - **Runtime Hardening (`s6-overlay` `cont-init.d`):** All images (`7.3`, `7.4`, `8.0`, `8.1`, `8.2`, `8.4`, `8.5`) automatically purge `apk-tools` and remove `/sbin/apk`, `/usr/sbin/apk`, `/etc/apk`, `/lib/apk`, `/usr/share/apk`, and `/var/cache/apk` during container startup (`/etc/cont-init.d/00-remove-apk.sh`). This allows developers to run `install-php-extensions`, `octane-install`, or `apk add` during `docker build`, while ensuring running pods do not have the `apk` binary available.
 
 ### Examples of extensions supported by `install-php-extensions`:

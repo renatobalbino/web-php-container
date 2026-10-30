@@ -5,7 +5,7 @@ PHP_RELEASE="${PHP_RELEASE:-8.5.12}"
 
 gunzip -c /tmp/s6-overlay-amd64.tar.gz | tar -xf - -C /
 
-# Essentials & runtime libraries
+# Essentials & runtime libraries (base headless tools like xvfb are installed via install-headless helper in headless stage)
 apk upgrade --update-cache --available
 apk add --no-cache \
     curl \
@@ -25,12 +25,7 @@ apk add --no-cache \
     libwebp \
     icu-libs \
     libzip \
-    readline \
-    xvfb \
-    ttf-freefont \
-    fontconfig \
-    dbus \
-    libxrender
+    readline
 
 # Add official NGINX repo for latest security fixes (CVE-2026-1642, CVE-2025-53859)
 ALPINE_VERSION=$(cut -d. -f1,2 /etc/alpine-release)

@@ -46,10 +46,8 @@ mkdir -p /var/www/html/public/
 
 echo "<?php phpinfo(); ?>" > /var/www/html/public/index.php
 
-#install composer 2.0
-chmod +x /tmp/composer.phar
-mv /tmp/composer.phar /usr/local/bin/composer
-composer self-update
+# Ensure composer permissions
+chmod +x /usr/local/bin/composer || true
 
 # Create s6-overlay cont-init.d hook to remove apk at container startup (leaving apk available for child Dockerfiles during build)
 mkdir -p /etc/cont-init.d
