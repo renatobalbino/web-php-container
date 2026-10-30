@@ -25,8 +25,11 @@ if [ -z "$REPOSITORY" ] || [ -z "$IMAGE" ]; then
     exit 1
 fi
 
-echo "==> Building $IMAGE:$TAG..."
-docker build --platform=linux/amd64 -t "$IMAGE:$TAG" "$VARIANT_DIR"
+echo "==> Building base image $IMAGE:$TAG..."
+docker build --platform=linux/amd64 --target base -t "$IMAGE:$TAG" "$VARIANT_DIR"
+
+echo "==> Building headless image $IMAGE:$TAG-headless..."
+docker build --platform=linux/amd64 --target headless -t "$IMAGE:$TAG-headless" "$VARIANT_DIR"
 
 echo "==> Running automated tests for $IMAGE:$TAG before pushing..."
 if ! "$ROOT_DIR/tests/test-images.sh" "php$TAG" "$IMAGE:$TAG"; then
@@ -34,8 +37,15 @@ if ! "$ROOT_DIR/tests/test-images.sh" "php$TAG" "$IMAGE:$TAG"; then
     exit 1
 fi
 
-echo "✅ Testes aprovados! Enviando $REPOSITORY/$IMAGE:$TAG para o Docker Hub..."
+echo "==> Running automated tests for $IMAGE:$TAG-headless before pushing..."
+if ! "$ROOT_DIR/tests/test-images.sh" "php$TAG-headless" "$IMAGE:$TAG-headless"; then
+    echo "❌ ERRO: Os testes falharam para a imagem $IMAGE:$TAG-headless! O envio para o Docker Hub foi cancelado."
+    exit 1
+fi
+
+echo "✅ Testes aprovados! Enviando $REPOSITORY/$IMAGE:$TAG e $TAG-headless para o Docker Hub..."
 docker tag "$IMAGE:$TAG" "$REPOSITORY/$IMAGE:$TAG"
-docker tag "$IMAGE:$TAG" "$REPOSITORY/$IMAGE:latest"
+docker tag "$IMAGE:$TAG-headless" "$REPOSITORY/$IMAGE:$TAG-headless"
+
 docker push "$REPOSITORY/$IMAGE:$TAG"
-#docker push "$REPOSITORY/$IMAGE:latest"
+docker push "$REPOSITORY/$IMAGE:$TAG-headless"

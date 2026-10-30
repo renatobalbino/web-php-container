@@ -1,4 +1,5 @@
-FROM alpine:3.24.1
+# Stage 1: Runtime base image
+FROM alpine:3.24.1 AS base
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
 ENV PHP_VERSION=84
@@ -6,7 +7,8 @@ ENV PHP_VERSION=84
 COPY /config/install-php-extensions /usr/local/bin/install-php-extensions
 COPY /config/docker-php-ext-enable /usr/local/bin/docker-php-ext-enable
 COPY /config/octane-install /usr/local/bin/octane-install
-RUN chmod +x /usr/local/bin/install-php-extensions /usr/local/bin/docker-php-ext-enable /usr/local/bin/octane-install \
+COPY /config/install-headless /usr/local/bin/install-headless
+RUN chmod +x /usr/local/bin/install-php-extensions /usr/local/bin/docker-php-ext-enable /usr/local/bin/octane-install /usr/local/bin/install-headless \
     && ln -sf /usr/local/bin/install-php-extensions /usr/local/bin/docker-php-ext-install \
     && ln -sf /usr/local/bin/octane-install /usr/local/bin/install-octane
 
@@ -24,11 +26,11 @@ RUN sh boostrap.sh
 ENTRYPOINT ["/init"]
 CMD []
 
-#Copy FPM service script
+# Copy FPM service script
 COPY /config/start-php-fpm.sh /etc/services.d/php-fpm/run
 RUN chmod 755 /etc/services.d/php-fpm/run
 
-#Copy NGINX service script
+# Copy NGINX service script
 COPY /config/start-nginx.sh /etc/services.d/nginx/run
 RUN chmod 755 /etc/services.d/nginx/run
 
@@ -46,3 +48,7 @@ RUN mkdir -p /var/lib/nginx \
     && chmod -R 770 /var/lib/nginx/tmp
 
 WORKDIR /var/www/html
+
+# Stage 2: Headless variant
+FROM base AS headless
+RUN install-headless

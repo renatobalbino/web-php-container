@@ -4,7 +4,7 @@ set -e
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TAG="${1:-8.5}"
 
-ALL_VARIANTS="7.3 7.4 8.0 8.1 8.2 8.4 8.5"
+ALL_VARIANTS="7.3 7.4 8.0 8.1 8.2 8.3 8.4 8.5"
 
 build_single() {
     TARGET_TAG="$1"

@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'PHP version to build (all, 8.5, 8.4, 8.2, 8.1, 8.0, 7.4, 7.3)'
+        description: 'PHP version to build (all, 8.5, 8.4, 8.3, 8.2, 8.1, 8.0, 7.4, 7.3)'
         required: false
         default: 'all'
         type: choice
@@ -24,6 +24,7 @@ on:
           - all
           - "8.5"
           - "8.4"
+          - "8.3"
           - "8.2"
           - "8.1"
           - "8.0"
@@ -46,6 +47,7 @@ jobs:
           - "8.0"
           - "8.1"
           - "8.2"
+          - "8.3"
           - "8.4"
           - "8.5"
     steps:

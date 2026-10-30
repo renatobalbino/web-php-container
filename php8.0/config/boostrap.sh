@@ -34,12 +34,8 @@ apk add php$PHP_VERSION-phar
 
 ln -s /usr/bin/php8 /usr/bin/php
 
-#install composer 2.0
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php composer-setup.php
-php -r "unlink('composer-setup.php');"
-
-mv composer.phar /usr/local/bin/composer
+# Ensure composer permissions
+chmod +x /usr/local/bin/composer || true
 
 #Nginx
 mkdir -p /var/www/html/

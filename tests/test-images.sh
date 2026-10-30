@@ -72,7 +72,7 @@ get_extra_extensions() {
 
 is_modern_variant() {
     case "$1" in
-        8.4|8.5) return 0 ;;
+        8.3|8.4|8.5) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -201,26 +201,31 @@ test_variant() {
         assert_contains "$COMPOSER_OUT" "Composer" "Composer is installed and runnable"
     fi
 
-    HELPER_OUT=$(docker run --rm --platform=linux/amd64 --entrypoint sh "$IMAGE_TAG" -c "command -v install-php-extensions && command -v docker-php-ext-enable && command -v docker-php-ext-install" 2>&1 || true)
+    HELPER_OUT=$(docker run --rm --platform=linux/amd64 --entrypoint sh "$IMAGE_TAG" -c "command -v install-php-extensions && command -v docker-php-ext-enable && command -v docker-php-ext-install && command -v install-headless" 2>&1 || true)
     assert_contains "$HELPER_OUT" "/usr/local/bin/install-php-extensions" "Helper 'install-php-extensions' is available in PATH"
     assert_contains "$HELPER_OUT" "/usr/local/bin/docker-php-ext-enable" "Helper 'docker-php-ext-enable' is available in PATH"
     assert_contains "$HELPER_OUT" "/usr/local/bin/docker-php-ext-install" "Helper 'docker-php-ext-install' is available in PATH"
+    assert_contains "$HELPER_OUT" "/usr/local/bin/install-headless" "Helper 'install-headless' is available in PATH"
 
     if is_modern_variant "$PHP_VER"; then
         OCTANE_HELPER_OUT=$(docker run --rm --platform=linux/amd64 --entrypoint sh "$IMAGE_TAG" -c "command -v octane-install && command -v install-octane" 2>&1 || true)
         assert_contains "$OCTANE_HELPER_OUT" "/usr/local/bin/octane-install" "Helper 'octane-install' is available in PATH"
         assert_contains "$OCTANE_HELPER_OUT" "/usr/local/bin/install-octane" "Helper 'install-octane' is available in PATH"
 
-        # 5. Check required Alpine system packages
-        APK_OUT=$(docker run --rm --platform=linux/amd64 --entrypoint apk "$IMAGE_TAG" info 2>&1 || true)
-        for pkg in xvfb fontconfig dbus libxrender; do
-            assert_contains "$APK_OUT" "$pkg" "Alpine package installed: $pkg"
-        done
-        if printf "%s" "$APK_OUT" | grep -qiE "ttf-freefont|font-freefont"; then
-            pass "Alpine package installed: ttf-freefont"
-        else
-            fail "Alpine package installed: ttf-freefont (expected 'ttf-freefont' or 'font-freefont')"
-        fi
+        # Check headless packages only for -headless variant images
+        case "$VARIANT" in
+            *-headless*)
+                APK_OUT=$(docker run --rm --platform=linux/amd64 --entrypoint apk "$IMAGE_TAG" info 2>&1 || true)
+                for pkg in xvfb fontconfig dbus libxrender; do
+                    assert_contains "$APK_OUT" "$pkg" "Alpine package installed: $pkg"
+                done
+                if printf "%s" "$APK_OUT" | grep -qiE "ttf-freefont|font-freefont"; then
+                    pass "Alpine package installed: ttf-freefont"
+                else
+                    fail "Alpine package installed: ttf-freefont (expected 'ttf-freefont' or 'font-freefont')"
+                fi
+                ;;
+        esac
     fi
 
     # 6. Check loaded PHP extensions
@@ -369,12 +374,17 @@ case "$TARGET" in
         test_variant "php8.0" 18080 ""
         test_variant "php8.1" 18082 ""
         test_variant "php8.2" 18084 ""
-        test_variant "php8.4" 18085 ""
-        test_variant "php8.5" 18086 ""
+        test_variant "php8.3" 18085 ""
+        test_variant "php8.4" 18086 ""
+        test_variant "php8.5" 18087 ""
         ;;
     modern)
-        test_variant "php8.4" 18080 ""
-        test_variant "php8.5" 18082 ""
+        test_variant "php8.3" 18080 ""
+        test_variant "php8.4" 18082 ""
+        test_variant "php8.5" 18084 ""
+        ;;
+    8.3)
+        test_variant "php8.3" 18080 ""
         ;;
     8.4)
         test_variant "php8.4" 18080 ""
