@@ -1,6 +1,5 @@
 # Web PHP Container (PHP-FPM + Nginx on Alpine Linux)
 
-[![Docker Image CI](https://github.com/renatobalbino/web-php-container/actions/workflows/docker-image.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/docker-image.yml)
 [![PHP 8.5](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.5.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.5.yml)
 [![PHP 8.4](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.4.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.4.yml)
 [![PHP 8.2](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.2.yml/badge.svg)](https://github.com/renatobalbino/web-php-container/actions/workflows/php8.2.yml)

@@ -126,6 +126,11 @@ export PHP_AUTOHEADER=/usr/bin/autoheader
 printf "\n" | /usr/local/bin/pecl install redis
 echo "extension=redis.so" > /usr/local/etc/php/conf.d/20_redis.ini
 
+# Strip compiled binaries to minimize size
+strip --strip-all /usr/local/bin/php /usr/local/sbin/php-fpm || true
+rm -f /usr/local/bin/phpdbg
+rm -rf /usr/local/php /root/.cache /var/cache/apk/*
+
 # Clean up source and build dependencies
 cd /tmp
 rm -rf /usr/src/php /tmp/php.tar.xz
